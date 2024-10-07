@@ -1,0 +1,159 @@
+from datetime import datetime
+
+print("==========================================")
+print("--------------  Banco BR -----------------")
+print("==========================================")
+
+print("Seja bem-vindo ao Banco BR, o Banco de todos os brasileiros.\n")
+
+clientes = {}
+contas = {}
+
+# Limites e variáveis de controle
+limite = 500
+limite_saques = 3
+limite_transacoes = 10
+
+
+def cadastrar_cliente():
+    cpf = input("Digite o CPF (somente números): ")
+    if cpf in clientes:
+        print("Erro! CPF já cadastrado.")
+        return  # Retorna para o menu principal se o CPF já estiver cadastrado
+
+    nome = input("Digite o nome do cliente: ")
+    data_nascimento = input("Digite a data de nascimento (dd/mm/aaaa): ")
+    endereco = input("Digite o endereço: ")
+
+    # Aqui usamos input para a senha e verificamos seu comprimento e se são dígitos.
+    senha = input("Digite uma senha de 4 dígitos: ")
+    if len(senha) != 4 or not senha.isdigit():
+        print("Erro! A senha deve conter 4 dígitos.")
+        return  # Retorna para o menu principal se a senha for inválida
+
+    # Armazenando informações do cliente
+    clientes[cpf] = {
+        "nome": nome,
+        "data_nascimento": data_nascimento,
+        "endereco": endereco,
+        "senha": senha,
+    }
+    contas[cpf] = {
+        "saldo": 0,
+        "extrato": "",
+        "numero_saques": 0,
+        "numero_transacoes": 0
+    }
+
+    print("Cliente cadastrado com sucesso!\n")
+
+
+def buscar_cliente():
+    cpf = input("Digite o CPF (somente números): ")
+    cliente = clientes.get(cpf)
+    if not cliente:
+        print("Erro! Cliente não encontrado.")
+        return
+
+    print("\nDados do Cliente:")
+    print(f"Nome: {cliente['nome']}")
+    print(f"Data de Nascimento: {cliente['data_nascimento']}")
+    print(f"Endereço: {cliente['endereco']}")
+    print("==============================================")
+
+
+def acessar_conta():
+    cpf = input("Digite o CPF (somente números): ")
+    senha = input("Digite a senha de 4 dígitos: ")
+
+    cliente = clientes.get(cpf)
+    if not cliente or cliente["senha"] != senha:
+        print("Erro! CPF ou senha inválidos.")
+        return
+
+    conta = contas[cpf]
+    while True:
+        menu = input(
+            "Escolha a opção desejada:\n"
+            "[1] - Depósito\n"
+            "[2] - Saque \n"
+            "[3] - Extrato \n"
+            "[0] - Sair \n"
+        )
+
+        if menu == "1":
+            if conta["numero_transacoes"] >= limite_transacoes:
+                print("Erro! Número de transações diárias excedeu o permitido, tente novamente em 24 horas.")
+                continue
+
+            valor = float(input("Digite o valor do depósito: "))
+            if valor > 0:
+                conta["saldo"] += valor
+                data_hora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                conta["extrato"] += f"{data_hora} - Depósito: R${valor:.2f}\n"
+                conta["numero_transacoes"] += 1
+                print(f"Depósito de R${valor:.2f} realizado com sucesso!")
+            else:
+                print("Erro! Valor inválido.")
+
+        elif menu == "2":
+            if conta["numero_transacoes"] >= limite_transacoes:
+                print("Erro! Número de transações diárias excedeu o permitido, tente novamente em 24 horas.")
+                continue
+
+            valor = float(input("Digite o valor do saque: "))
+            excedeu_saldo = valor > conta["saldo"]
+            excedeu_limite = valor > limite
+            excedeu_saques = conta["numero_saques"] >= limite_saques
+
+            if excedeu_saldo:
+                print("Erro! Você não tem saldo suficiente para esse saque.")
+            elif excedeu_limite:
+                print("Erro! O valor do saque excede o limite permitido.")
+            elif excedeu_saques:
+                print("Erro! Número de saques diários excedeu o permitido, tente novamente em 24 horas.")
+            elif valor > 0:
+                conta["saldo"] -= valor
+                data_hora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                conta["extrato"] += f"{data_hora} - Saque: R${valor:.2f}\n"
+                conta["numero_saques"] += 1
+                conta["numero_transacoes"] += 1
+                print(f"Saque de R${valor:.2f} realizado com sucesso!")
+            else:
+                print("Erro! Valor inválido.")
+
+        elif menu == "3":
+            print("\n================== Extrato ==================")
+            print("Não foi realizada nenhuma movimentação." if not conta["extrato"] else conta["extrato"])
+            print(f"\nSaldo: R$ {conta['saldo']:.2f}")
+            print("==============================================")
+
+        elif menu == "0":
+            print("Saindo da conta...")
+            break
+
+        else:
+            print("Opção inválida! Selecione a opção correta.")
+
+
+# Menu principal
+while True:
+    opcao = input(
+        "Escolha a opção desejada:\n"
+        "[1] - Cadastrar Cliente\n"
+        "[2] - Buscar Cliente\n"
+        "[3] - Acessar Conta\n"
+        "[0] - Sair\n"
+    )
+
+    if opcao == "1":
+        cadastrar_cliente()
+    elif opcao == "2":
+        buscar_cliente()
+    elif opcao == "3":
+        acessar_conta()
+    elif opcao == "0":
+        print("Obrigado por utilizar o Banco BR. Até mais!")
+        break
+    else:
+        print("Opção inválida! Selecione a opção correta.")
